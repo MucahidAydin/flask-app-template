@@ -1,0 +1,20 @@
+FROM ubuntu:22.04
+
+ENV PYTHONUNBUFFERED 1
+
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata \
+    && ln -fs /usr/share/zoneinfo/Etc/UTC /etc/localtime \
+    && echo "Etc/UTC" > /etc/timezone \
+    && dpkg-reconfigure -f noninteractive tzdata \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && apt-get install -y python3 python3-pip python3-dotenv nano curl bash && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install Flask==3.1.0 gunicorn==23.0.0 celery==5.4.0 requests==2.32.3 redis==5.2.1 url-parser==3.0.3 marshmallow==3.23.2
+
+WORKDIR /opt
+
+CMD ["gunicorn", "-w", "4", "run:app", "-b", "0.0.0.0:4747", "--log-level", "info", "--max-requests", "500", "--max-requests-jitter", "50"]
